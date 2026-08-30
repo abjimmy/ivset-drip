@@ -174,7 +174,7 @@
 <div id="hint"><div class="card">
   <b>🎯 滴速检测 · 三步上手</b>
   <p>① 点底部「🖥 测试源」切换为「📷 摄像头」，允许权限后对准滴管</p>
-  <p>② 拖动蓝色横带（右下角圆点缩放）：放在<b>滴嘴与液面之间</b>的落液柱上，横带越窄越准，避开液面</p>
+  <p>② 拖动蓝色横带（右下角圆点缩放）：放在<b>滴嘴与液面之间</b>的落液柱中段，<b>离液面越远越好</b>——碰到液面会把水的弹跳误计成滴数</p>
   <p>③ 液滴穿过横带时闪绿环，左上角实时显示滴/分</p>
   <button id="hintOk">知道了，开始</button>
 </div></div>
@@ -196,6 +196,7 @@
       <button class="chip active" data-vid="videos/iv-drip-closeup-46366.mp4" data-native="45">滴壶特写 ①</button>
       <button class="chip" data-vid="videos/iv-fluid-dripping-38500.mp4" data-native="40">输液滴流 ②</button>
       <label class="upload-btn" style="padding:4px 11px">＋ 上传视频<input type="file" id="vidInput" accept="video/*" hidden></label>
+      <button class="chip" id="calBtn">🎯 校准原生滴速</button>
     </div>
     <div class="grow"></div>
     <label class="hint">视频原始滴速 <input type="number" id="nativeRate" value="45" min="1" max="300" style="width:60px"> 滴/分</label>
@@ -222,8 +223,8 @@
   </div>
   <div class="row" id="detRow2" style="display:none">
     <div class="label">操作说明</div>
-    <span class="hint">把蓝色虚线框拉成一条「窄横带」，放在滴嘴与液面之间——液滴每次穿过带子产生一个脉冲，即为可靠的一滴（框越窄越准，避开液面防溅射干扰）。
-      测试源模式下动画滴速精确已知，可用于验证检测精度；摄像头模式在手机 App / HTTPS 环境下可用。</span>
+    <span class="hint">横带放在滴嘴与液面之间的落液柱中段，离液面越远越好（水面弹跳会被误计成滴数）。
+      电脑上验证精度：用「测试源 + 动画」，滴速精确已知；用实拍视频请先点「校准原生滴速」。摄像头模式需 App / HTTPS 环境。</span>
   </div>
   <div class="row anim-only" id="bgRow">
     <div class="label">背 景</div>
@@ -562,7 +563,7 @@ function setMode(m) {
   $('detCard').style.display = m === 'detect' ? 'block' : 'none';
   $('modeHint').textContent = {
     anim: '程序绘制的写实动画（可替换背景）',
-    video: '实拍素材 · Mixkit 免费授权 · 速率通过播放速度调节',
+    video: '实拍素材 · 速率=播放倍速（先「校准原生滴速」再设目标）',
     detect: '图像检测滴速 · 拖动蓝色虚线框对准滴管',
   }[m];
   if (m === 'video') { if (!vid.src) setVideoSrc(VID_DEFAULT); applyVideoRate(); }
@@ -653,7 +654,7 @@ function impact(d) {
   const n = 3 + (Math.random() * 3 | 0);
   for (let i = 0; i < n; i++)
     splashes.push({ x: L.cx + rand(-3, 3), y: sy - 2, vx: rand(-1, 1) * L.S * 0.16,
-      vy: -rand(0.30, 0.75) * L.S * 0.55, r: rand(1, 2.6), t: 0, dur: rand(0.3, 0.55) });
+      vy: -rand(0.30, 0.55) * L.S * 0.55, r: rand(1, 2.6), t: 0, dur: rand(0.3, 0.55) });
   const bn = 1 + (Math.random() * 2 | 0);
   for (let i = 0; i < bn; i++)
     bubbles.push({ x: L.cx + rand(-6, 6), y: sy + rand(4, 16), r: rand(1, 2.2), wob: rand(6.28), sp: rand(10, 20) });
@@ -1077,10 +1078,10 @@ function stopCamera() {
 }
 
 function resetDefaultRoi() {   // 按当前画面几何把横带放回「滴嘴与液面之间」
-  if (state.detSource === 'camera') det.roi = { x: 0.46, y: 0.40, w: 0.08, h: 0.05 };
+  if (state.detSource === 'camera') det.roi = { x: 0.46, y: 0.38, w: 0.08, h: 0.035 };
   else {
-    const y1 = clamp((L.stubBot + L.chH * 0.05) / H, 0.02, 0.9);
-    const y2 = clamp((L.surfaceY - L.chH * 0.04) / H, 0.03, 0.95);
+    const y1 = clamp((L.stubBot + L.dropR * 2.6) / H, 0.02, 0.9);     // 避开滴嘴颈缩下垂的液滴
+    const y2 = clamp((L.surfaceY - L.dropR * 1.2) / H, 0.03, 0.95);   // 避开液面弹跳与溅射水花
     det.roi = { x: L.cx / W - 0.04, y: y1, w: 0.08, h: Math.max(0.02, y2 - y1) };
   }
   det.needReset = true;
@@ -1173,7 +1174,10 @@ function detSample(src, sw, sh) {
   // 重新武装：需连续 3 帧低于武装线（防事件内子峰重复计数）
   if (ratio < armedLine) { det._dwell++; if (det._dwell >= 3) det.armed = true; }
   else det._dwell = 0;
-  if (det.armed && ratio > thr && t - det.lastEvent > 0.13) {
+  // 自适应不应期：随稳定节律拉长，抑制液面弹跳/液滴拖尾造成的“一滴两计”
+  if (det.medIv && t - det.lastEvent > Math.max(6 * det.medIv, 5)) det.medIv = 0;  // 长时间无事件→速率已变，收缩不应期
+  const refractory = clamp(0.55 * (det.medIv || 0), 0.13, 1.2);
+  if (det.armed && ratio > thr && t - det.lastEvent > refractory) {
     det.armed = false;
     det.lastEvent = t; det.count++;
     det.events.push(t); det.flash = t;
@@ -1188,6 +1192,12 @@ function detSample(src, sw, sh) {
     det.rate = 60 / det.medIv;
   }
   if (t - det.lastEvent > 10) { det.status = '未检测到液滴'; det.rate = 0; }
+  // 信号持续偏高：横带大概率压在液面/波动区上，给出可操作提示
+  if (ratio > thr) det._hiT = (det._hiT || 0) + (t - (det._lt === undefined ? t : det._lt));
+  else det._hiT = 0;
+  det._lt = t;
+  if (det._hiT > 3) det.status = '信号持续偏高：请上移横带避开液面';
+  else if (det._hiT === 0 && det.status.indexOf('信号持续') === 0) det.status = '检测到液滴';
 }
 let detLastUi = 0;
 function detUpdateUi() {
@@ -1549,6 +1559,55 @@ $('nativeRate').addEventListener('change', e => {
   applyVideoRate();
 });
 $('vidInput').addEventListener('change', e => { const f = e.target.files[0]; if (f) loadFile(f); e.target.value = ''; });
+
+// 原生滴速校准：回到 1x 播放，用检测器实测素材的真实滴速（25s）
+let calibrating = false;
+$('calBtn').addEventListener('click', async () => {
+  if (calibrating) return;
+  if (state.baseMode !== 'video') { showBanner('校准需在「🎬 实拍视频」源下进行：先选视频源，再点校准'); return; }
+  calibrating = true;
+  const restore = $('calBtn').textContent;
+  $('calBtn').textContent = '校准中… 约25秒';
+  const prevRate = state.rate, prevSens = state.sens;
+  state.sens = Math.max(state.sens, 7);
+  setMode('detect');                       // 底层继续播实拍视频
+  vid.playbackRate = 1; vid.play().catch(() => {});
+  det.count = 0; det.events = []; det.rate = 0; det.medIv = 0;
+  det.armed = true; det.lastEvent = -1e9; det.roiTouched = false;
+  resetDefaultRoi();
+  try { if (isFinite(vid.duration) && vid.duration > 20) vid.currentTime = 1.5; } catch (e) {}  // 跳过循环接缝
+  // 自动瞄准：扫描候选横带位置，选事件最多者（素材液柱位置各不相同）
+  const cands = [[0.30, 0.30], [0.42, 0.30], [0.56, 0.30], [0.30, 0.45], [0.46, 0.45], [0.60, 0.45]];
+  let best = null;
+  for (const [cx2, cy2] of cands) {
+    det.roi = { x: cx2, y: cy2, w: 0.10, h: 0.04 };
+    det.needReset = true;
+    det.count = 0; det.events = []; det.rate = 0; det.medIv = 0;
+    det.armed = true; det.lastEvent = -1e9;
+    $('calBtn').textContent = `瞄准中 ${Math.round(cx2 * 100)}%…`;
+    await new Promise(r => setTimeout(r, 4500));
+    if (!best || det.count > best.n) best = { roi: { ...det.roi }, n: det.count };
+  }
+  det.roi = { ...best.roi };
+  det.needReset = true;
+  det.count = 0; det.events = []; det.rate = 0; det.medIv = 0;
+  det.armed = true; det.lastEvent = -1e9;
+  $('calBtn').textContent = '测量中… 23秒';
+  await new Promise(r => setTimeout(r, 23000));
+  const measured = +det.rate.toFixed(1);
+  state.sens = prevSens;
+  state.rate = prevRate;
+  setMode('video');
+  applyVideoRate();
+  if (measured >= 0.5) {
+    state.nativeRate = measured;
+    $('nativeRate').value = measured;
+    $('calBtn').textContent = '✓ 原生 ' + measured + ' 滴/分';
+  } else {
+    $('calBtn').textContent = '⚠ 未检出液滴，调整后重试';
+  }
+  setTimeout(() => { $('calBtn').textContent = restore; calibrating = false; }, 4000);
+});
 
 $('keyOn').addEventListener('change', e => { state.keying = e.target.checked; refreshBgAvail(); });
 $('keyThresh').addEventListener('input', e => { state.keyThresh = +e.target.value; });
