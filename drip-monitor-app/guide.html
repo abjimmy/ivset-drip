@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#071414" />
+    <meta name="description" content="滴准 App 的 iOS、Android、HarmonyOS 安装与使用手册" />
+    <title>安装与使用手册 · 滴准</title>
+    <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="guide.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="back" href="./" aria-label="返回滴准 App">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        返回 App
+      </a>
+      <span class="brand"><i></i>DRIP LENS</span>
+      <button class="print-button" type="button" onclick="window.print()">打印</button>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="eyebrow">QUICK START GUIDE · V0.1</div>
+        <h1>安装与使用手册</h1>
+        <p>把手机摄像头对准莫菲氏滴管，在设备本机实时估算滴注速度。</p>
+        <div class="platforms" aria-label="支持平台">
+          <span>iOS</span><span>Android</span><span>HarmonyOS</span>
+        </div>
+        <div class="hero-note">当前版本是可安装网页应用（PWA），不是 App Store、APK 或 HAP 安装包。</div>
+        <div class="hero-actions">
+          <a class="primary" href="./?source=camera&amp;autostart=1">打开摄像头检测</a>
+          <a href="./?source=test">使用内置视频测试</a>
+        </div>
+      </section>
+
+      <nav class="toc" aria-label="手册目录">
+        <a href="#install"><b>01</b><span>安装到手机</span></a>
+        <a href="#first-use"><b>02</b><span>首次监测</span></a>
+        <a href="#position"><b>03</b><span>正确取景</span></a>
+        <a href="#readings"><b>04</b><span>读懂结果</span></a>
+        <a href="#test"><b>05</b><span>视频测试</span></a>
+        <a href="#trouble"><b>06</b><span>故障排查</span></a>
+      </nav>
+
+      <aside class="notice warning">
+        <strong>使用边界</strong>
+        <p>本产品目前是视觉算法原型，不是医疗器械。透明塑料反光、手机抖动、气泡、遮挡和低照度都可能造成误差；不得以本界面读数替代医护人员判断、输液泵报警或临床监护。</p>
+      </aside>
+
+      <section class="manual-section" id="install">
+        <header><span>01</span><div><div class="kicker">INSTALLATION</div><h2>安装到手机</h2></div></header>
+        <div class="prerequisite">
+          <b>安装前先确认</b>
+          <p>手机需要打开一个 <strong>HTTPS</strong> 网址。电脑预览地址 <code>127.0.0.1:4173</code> 只能在这台电脑本机使用；在手机上输入它，会指向手机自己。要给手机安装，请先把本目录部署到 HTTPS 服务器。</p>
+        </div>
+        <div class="platform-grid">
+          <article>
+            <div class="platform-title"><span>iOS</span><small>Safari</small></div>
+            <ol>
+              <li>用 Safari 打开滴准的 HTTPS 地址。</li>
+              <li>点“分享”或“更多”，选择“添加到主屏幕”。</li>
+              <li>如页面提供“作为 Web App 打开”，将其启用。</li>
+              <li>点“添加”，以后从桌面图标启动。</li>
+            </ol>
+          </article>
+          <article>
+            <div class="platform-title"><span>Android</span><small>Chrome</small></div>
+            <ol>
+              <li>用 Chrome 打开滴准的 HTTPS 地址。</li>
+              <li>点右上角“更多”。</li>
+              <li>选择“安装应用”或“添加到主屏幕”。</li>
+              <li>确认安装，从桌面图标启动。</li>
+            </ol>
+          </article>
+          <article>
+            <div class="platform-title"><span>HarmonyOS</span><small>华为浏览器</small></div>
+            <ol>
+              <li>用华为浏览器打开滴准的 HTTPS 地址。</li>
+              <li>点底部右侧菜单。</li>
+              <li>选择“添加至”→“桌面”。</li>
+              <li>按系统提示授权创建桌面快捷方式。</li>
+            </ol>
+          </article>
+        </div>
+        <p class="source-line">不同系统版本的菜单名称可能略有差异，详细步骤见文末官方参考。</p>
+      </section>
+
+      <section class="manual-section" id="first-use">
+        <header><span>02</span><div><div class="kicker">FIRST MONITORING</div><h2>完成第一次监测</h2></div></header>
+        <ol class="steps">
+          <li><b>固定手机</b><p>优先使用手机支架，后置摄像头与滴管保持基本平行，避免手持晃动。</p></li>
+          <li><b>打开摄像头</b><p>启动 App，选择“手机后置摄像头”，首次使用时允许摄像头权限。</p></li>
+          <li><b>对准滴管</b><p>让滴嘴、液滴下落通道和液面上方透明区域清晰可见。</p></li>
+          <li><b>调整识别框</b><p>拖动方框改变位置，拖右下角控制点调整大小；虚线检测门应横穿液滴路径。</p></li>
+          <li><b>开始监测</b><p>点击“开始监测”，保持画面不动，等待校准并观察 3–5 滴后再读取结果。</p></li>
+        </ol>
+        <aside class="notice tip"><strong>补光建议</strong><p>背景与液滴反差不足时可打开“补光”。若按钮不可用，说明当前手机或浏览器未向网页开放闪光灯控制。</p></aside>
+      </section>
+
+      <section class="manual-section" id="position">
+        <header><span>03</span><div><div class="kicker">POSITIONING</div><h2>正确放置识别框</h2></div></header>
+        <div class="do-dont">
+          <article class="do"><b>建议这样做</b><ul><li>只框住滴嘴到液面之间的透明通道</li><li>让虚线横穿液滴的必经位置</li><li>保持滴管居中、背景简单、光线均匀</li><li>用支架固定手机与输液器</li></ul></article>
+          <article class="dont"><b>尽量避免</b><ul><li>识别框覆盖液面、塑料边缘或刻度文字</li><li>背景有人走动、屏幕闪烁或窗外强光</li><li>液面剧烈晃动或大量气泡经过</li><li>画面失焦、过暗或高光反射严重</li></ul></article>
+        </div>
+        <p>误报较多时，在“识别设置”中降低灵敏度；漏检时先改善取景和光线，再小幅提高灵敏度。</p>
+      </section>
+
+      <section class="manual-section" id="readings">
+        <header><span>04</span><div><div class="kicker">READINGS</div><h2>读懂界面结果</h2></div></header>
+        <div class="metric-grid">
+          <article><b>实时滴速</b><p>最近多个有效液滴间隔估算出的每分钟滴数（滴/分）。</p></article>
+          <article><b>平均间隔</b><p>相邻有效液滴之间的代表性时间，单位为秒。</p></article>
+          <article><b>本次计数</b><p>本次开始监测后被算法接受的液滴事件数量。</p></article>
+          <article><b>稳定度</b><p>近期滴间隔的一致程度，只描述画面中的节律稳定性。</p></article>
+          <article><b>置信度</b><p>基于信号强度与规律性的算法内部参考，不等于医学精度或验证结论。</p></article>
+        </div>
+      </section>
+
+      <section class="manual-section" id="test">
+        <header><span>05</span><div><div class="kicker">TEST MODE</div><h2>用前序网页视频测试</h2></div></header>
+        <p>可以。打开“切换画面”→“内置测试视频”，App 会加载前序网页使用的真实滴管素材。它适合检查界面、识别框、倍速切换和算法是否正常运行。</p>
+        <ol class="compact-steps">
+          <li>选择“内置测试视频”。</li>
+          <li>将识别框放到滴嘴下方的液滴通道。</li>
+          <li>点击“开始监测”，再到设置中切换 0.5×、1×、1.5×、2×。</li>
+          <li>确认读数能随倍速改变，并观察是否出现明显误报。</li>
+        </ol>
+        <aside class="notice warning"><strong>它不是精度标准</strong><p>该视频没有逐帧人工标注的真实滴速，循环接缝、反光和气泡都可能形成运动信号。精度验证应使用已知滴速的装置同步拍摄并逐滴标注。</p></aside>
+        <aside class="notice tip"><strong>用两台设备联调</strong><p>电脑打开 GitHub 上的滴液演示网页并播放画面，手机打开“摄像头检测”链接，对准电脑屏幕中的滴管区域。它适合验证完整的摄像头流程，但屏幕刷新与反光会影响读数，仍不属于精度校准。</p></aside>
+      </section>
+
+      <section class="manual-section" id="trouble">
+        <header><span>06</span><div><div class="kicker">TROUBLESHOOTING</div><h2>常见问题</h2></div></header>
+        <div class="faq">
+          <details open><summary>摄像头打不开</summary><p>确认网址是 HTTPS；在浏览器的网站权限中允许摄像头；关闭可能占用摄像头的其他应用，然后刷新页面。手机上的 <code>127.0.0.1</code> 不是电脑地址。</p></details>
+          <details><summary>一直显示“等待液滴”</summary><p>重新调整识别框，让虚线通过液滴路径；增加光线或对焦；适当提高灵敏度，并确认视频确实在播放。</p></details>
+          <details><summary>滴速跳动或计数过多</summary><p>固定手机，缩小识别框，避开液面、气泡和塑料高光；降低灵敏度并等待几滴，让结果重新稳定。</p></details>
+          <details><summary>找不到“安装”按钮</summary><p>直接使用浏览器菜单：iOS 用 Safari 的“添加到主屏幕”，Android 用 Chrome 的“安装应用”，HarmonyOS 用华为浏览器的“添加至桌面”。</p></details>
+          <details><summary>补光按钮不可用</summary><p>部分 iPhone、浏览器或摄像头组合不向网页开放手电筒控制。这不影响基础监测，可改用环境灯或另一台设备补光。</p></details>
+        </div>
+      </section>
+
+      <section class="manual-section privacy" id="privacy">
+        <header><span>07</span><div><div class="kicker">PRIVACY &amp; MAINTENANCE</div><h2>隐私、离线与卸载</h2></div></header>
+        <ul>
+          <li><b>本机处理：</b>当前版本在设备浏览器内分析画面，不上传视频帧。</li>
+          <li><b>离线使用：</b>首次在线完整打开后，核心界面和内置测试素材会被缓存；摄像头能力仍取决于设备和浏览器。</li>
+          <li><b>撤销权限：</b>在浏览器的网站设置或系统隐私设置中关闭该站点的摄像头权限。</li>
+          <li><b>卸载：</b>长按桌面图标删除；HarmonyOS 若安装的是桌面快捷方式，删除只会移除快捷方式。</li>
+        </ul>
+      </section>
+
+      <section class="references">
+        <h2>官方安装与权限参考</h2>
+        <ul>
+          <li><a href="https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios" target="_blank" rel="noreferrer">Apple：在 iPhone 上将网站作为 App 打开</a></li>
+          <li><a href="https://support.google.com/chrome/answer/9658361/use-progressive-web-apps-android?co=GENIE.Platform%3DAndroid&amp;hl=zh-Hans" target="_blank" rel="noreferrer">Google Chrome：在 Android 上使用 Web 应用</a></li>
+          <li><a href="https://consumer.huawei.com/cn/support/content/zh-cn00448896/" target="_blank" rel="noreferrer">华为：浏览器添加网站至桌面快捷方式</a></li>
+          <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/MediaDevices/getUserMedia" target="_blank" rel="noreferrer">MDN：摄像头权限与安全上下文</a></li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <a href="./">打开滴准 App</a>
+      <span>滴准视觉滴速监测原型 · 手册版本 0.1 · 2026-08-30</span>
+    </footer>
+  </body>
+</html>
+

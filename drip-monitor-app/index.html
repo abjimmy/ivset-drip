@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#071416" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="滴准" />
+    <meta name="description" content="使用手机摄像头实时识别莫菲氏滴管滴注速度的本地视觉分析工具。" />
+    <title>滴准 · 实时滴速监测</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/app-icon-192.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="monitor-app" id="monitorApp">
+      <header class="app-bar">
+        <a class="app-brand" href="#" aria-label="滴准首页">
+          <span class="app-brand__icon" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><path d="M16 3.5C12.2 9.7 7.5 14.2 7.5 20a8.5 8.5 0 0 0 17 0c0-5.8-4.7-10.3-8.5-16.5Z"/><path d="M12.2 21.2c.4 2 1.7 3.2 3.7 3.7"/></svg>
+          </span>
+          <span><strong>滴准</strong><small>DRIP LENS</small></span>
+        </a>
+
+        <div class="privacy-pill"><span></span>本机分析</div>
+
+        <button class="round-button" id="settingsButton" type="button" aria-label="打开设置">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10m4 0h2M14 7a2 2 0 1 0 4 0 2 2 0 0 0-4 0ZM4 17h2m4 0h10M6 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z"/></svg>
+        </button>
+      </header>
+
+      <section class="viewfinder" id="viewfinder" aria-label="摄像头取景区域">
+        <video id="sourceVideo" muted playsinline loop preload="metadata" aria-label="滴管实时画面"></video>
+        <canvas id="analysisCanvas" hidden></canvas>
+        <div class="camera-placeholder" id="cameraPlaceholder">
+          <div class="camera-placeholder__rings"><i></i><i></i><i></i></div>
+          <p>等待影像输入</p>
+        </div>
+        <div class="viewfinder__shade" aria-hidden="true"></div>
+        <div class="thirds-grid" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+        <div class="source-chip" id="sourceChip"><span></span><b>未连接</b></div>
+        <div class="fps-chip"><span id="fpsValue">--</span> FPS</div>
+
+        <div class="roi-box" id="roiBox" role="group" aria-label="滴液识别区域，可拖动调整">
+          <i class="roi-corner roi-corner--tl"></i>
+          <i class="roi-corner roi-corner--tr"></i>
+          <i class="roi-corner roi-corner--br"></i>
+          <i class="roi-corner roi-corner--bl"></i>
+          <span class="roi-box__label"><b>DROP ZONE</b><small>将滴液路径置于框内</small></span>
+          <button class="roi-resize" id="roiResize" type="button" aria-label="调整识别框大小"></button>
+          <span class="scan-line" aria-hidden="true"></span>
+        </div>
+
+        <div class="alignment-tip" id="alignmentTip">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18"/></svg>
+          对准滴嘴与液面之间的落滴路径
+        </div>
+
+        <div class="drop-flash" id="dropFlash" aria-hidden="true"></div>
+      </section>
+
+      <section class="measurement-card" aria-labelledby="measurementTitle">
+        <div class="measurement-card__top">
+          <div>
+            <span class="card-kicker" id="measurementTitle">REAL-TIME FLOW</span>
+            <div class="rate-display"><strong id="rateValue">--</strong><span>滴 / 分</span></div>
+          </div>
+          <div class="quality-orb" id="qualityOrb" data-level="idle">
+            <svg viewBox="0 0 48 48" aria-hidden="true">
+              <circle cx="24" cy="24" r="19"/>
+              <circle class="quality-orb__progress" cx="24" cy="24" r="19"/>
+            </svg>
+            <span id="qualityValue">0%</span>
+          </div>
+        </div>
+
+        <div class="signal-row">
+          <div class="signal-status">
+            <span class="signal-status__dot" id="signalDot"></span>
+            <div><b id="signalTitle">等待开始</b><small id="signalHint">请选择摄像头或测试视频</small></div>
+          </div>
+          <canvas id="signalCanvas" width="420" height="62" aria-label="实时运动信号曲线"></canvas>
+        </div>
+
+        <div class="metric-grid">
+          <div><span>平均间隔</span><b id="intervalValue">--<small> s</small></b></div>
+          <div><span>累计滴数</span><b id="totalValue">0<small> 滴</small></b></div>
+          <div><span>稳定度</span><b id="stabilityValue">--<small> %</small></b></div>
+        </div>
+
+        <div class="primary-controls">
+          <button class="control-button" id="sourceButton" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v11H4V7Zm8 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
+            <span>影像源</span>
+          </button>
+          <button class="analyze-button" id="analyzeButton" type="button" disabled>
+            <span class="analyze-button__icon">
+              <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6v12m8-12v12"/></svg>
+              <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6V6Z"/></svg>
+            </span>
+            <span><b id="analyzeLabel">开始监测</b><small id="analyzeSubLabel">连接影像后可用</small></span>
+          </button>
+          <button class="control-button" id="torchButton" type="button" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3 6 0 1 5-3 3v10h-2V11L8 8l1-5Zm0 5h6"/></svg>
+            <span>补光</span>
+          </button>
+        </div>
+      </section>
+
+      <footer class="safe-note">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.2c0 4.6 3.2 8.7 7.5 9.8 4.3-1.1 7.5-5.2 7.5-9.8V6L12 3Zm0 5v5m0 3v.2"/></svg>
+        <span>当前为视觉测量原型，不可替代医用输液泵或人工巡检</span>
+      </footer>
+    </main>
+
+    <div class="sheet-backdrop is-visible" id="welcomeBackdrop"></div>
+    <section class="bottom-sheet welcome-sheet is-visible" id="welcomeSheet" aria-labelledby="welcomeTitle" aria-modal="true" role="dialog">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="welcome-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><path d="M32 8c-8 13-18 23-18 35a18 18 0 0 0 36 0c0-12-10-22-18-35Z"/><path d="M24 44c1 4 3.5 6.5 8 7.5"/></svg>
+      </div>
+      <span class="sheet-kicker">CAMERA FLOW ANALYSIS</span>
+      <h1 id="welcomeTitle">把滴管，放进框里。</h1>
+      <p>滴准会在本机逐帧分析滴嘴与液面之间的运动变化，实时估计滴注速度。摄像头画面不会上传。</p>
+      <div class="welcome-actions">
+        <button class="main-action" id="startCameraButton" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v11H4V7Zm8 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
+          开启后置摄像头
+        </button>
+        <button class="secondary-action" id="testVideoButton" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6V6Z"/></svg>
+          使用前序网页视频测试
+        </button>
+        <label class="text-action" for="videoUpload">
+          从相册选择一段滴管视频
+          <input id="videoUpload" type="file" accept="video/mp4,video/webm,video/quicktime" />
+        </label>
+      </div>
+      <div class="privacy-note"><span>01</span> 允许摄像头 <i></i><span>02</span> 框选落滴区 <i></i><span>03</span> 开始监测</div>
+    </section>
+
+    <div class="sheet-backdrop" id="sourceBackdrop"></div>
+    <section class="bottom-sheet source-sheet" id="sourceSheet" aria-labelledby="sourceTitle" aria-modal="true" role="dialog">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-title-row"><div><span class="sheet-kicker">VIDEO INPUT</span><h2 id="sourceTitle">选择影像源</h2></div><button class="close-button" data-close-sheet="source" type="button" aria-label="关闭"><svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg></button></div>
+      <div class="source-list">
+        <button id="sheetCameraButton" type="button"><i><svg viewBox="0 0 24 24"><path d="M4 7h3l1.5-2h7L17 7h3v11H4V7Zm8 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg></i><span><b>手机后置摄像头</b><small>实时识别实际输液器</small></span><em>推荐</em></button>
+        <button id="sheetTestButton" type="button"><i><svg viewBox="0 0 24 24"><path d="m9 6 9 6-9 6V6Z"/></svg></i><span><b>内置测试视频</b><small>使用前序网页的真实滴管素材</small></span></button>
+        <label for="sheetVideoUpload"><i><svg viewBox="0 0 24 24"><path d="M12 16V5m0 0L8 9m4-4 4 4M5 14v4.5h14V14"/></svg></i><span><b>选择本地视频</b><small>MP4、WebM 或 MOV</small></span><input id="sheetVideoUpload" type="file" accept="video/mp4,video/webm,video/quicktime" /></label>
+      </div>
+    </section>
+
+    <div class="sheet-backdrop" id="settingsBackdrop"></div>
+    <section class="bottom-sheet settings-sheet" id="settingsSheet" aria-labelledby="settingsTitle" aria-modal="true" role="dialog">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-title-row"><div><span class="sheet-kicker">DETECTION</span><h2 id="settingsTitle">识别设置</h2></div><button class="close-button" data-close-sheet="settings" type="button" aria-label="关闭"><svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg></button></div>
+      <div class="setting-row">
+        <div><b>检测灵敏度</b><small>背景晃动多时请调低</small></div>
+        <output id="sensitivityValue">65%</output>
+      </div>
+      <input class="setting-slider" id="sensitivitySlider" type="range" min="20" max="100" value="65" />
+      <div class="setting-row test-speed-row" id="testSpeedRow">
+        <div><b>测试视频速度</b><small>用于高低速识别压力测试</small></div>
+        <button id="testSpeedButton" type="button">1.0×</button>
+      </div>
+      <div class="settings-actions">
+        <button id="resetRoiButton" type="button">重置识别框</button>
+        <button id="resetSessionButton" type="button">清空本次数据</button>
+        <a class="guide-link" href="guide.html">
+          <span>安装与使用手册</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+        </a>
+        <button id="installButton" type="button" hidden>安装到桌面</button>
+      </div>
+      <div class="settings-footnote">为了减少误报，请固定手机，并让识别框只覆盖滴嘴至液面之间的透明区域。</div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
+
