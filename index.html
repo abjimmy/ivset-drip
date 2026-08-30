@@ -88,6 +88,55 @@
   #banner button { cursor: pointer; flex-shrink: 0; background: rgba(255,255,255,.08);
     border: 1px solid rgba(255,255,255,.25); color: inherit; border-radius: 8px; padding: 3px 10px; font-size: 12px; }
   .row.disabled { opacity: .35; pointer-events: none; }
+
+  /* ---- 面板折叠头 ---- */
+  #panelHead { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 8px; }
+  #panelHead b { font-size: 13px; color: #cfe0ee; letter-spacing: 1px; }
+  #panelToggle { cursor: pointer; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.2);
+    color: #cfe0ee; border-radius: 8px; padding: 3px 10px; font-size: 12px; }
+  #panel.collapsed > :not(#panelHead) { display: none !important; }
+
+  /* ---- 检测模式工具条（移动端主交互） ---- */
+  #detBar { position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: max(12px, env(safe-area-inset-bottom)); z-index: 6;
+    display: none; align-items: center; gap: 6px; white-space: nowrap;
+    background: rgba(13,16,20,.78); backdrop-filter: blur(14px);
+    border: 1px solid rgba(82,199,255,.35); border-radius: 14px;
+    padding: 7px 10px; box-shadow: 0 10px 30px rgba(0,0,0,.4); max-width: 96vw; }
+  #detBar .chip { padding: 5px 10px; font-size: 12px; }
+  body.detect #detBar { display: flex; }
+  body.detect #panel { display: none; }
+  body.detect #panel.show { display: block; }
+  body.detect #panel .anim-only { display: none; }
+
+  /* ---- 首次使用指引 ---- */
+  #hint { position: fixed; inset: 0; z-index: 15; display: none; align-items: center;
+    justify-content: center; background: rgba(5,8,12,.74); backdrop-filter: blur(6px); }
+  #hint.on { display: flex; }
+  #hint .card { max-width: min(430px, 88vw); background: rgba(17,23,30,.97);
+    border: 1px solid rgba(82,199,255,.4); border-radius: 16px; padding: 20px 22px;
+    color: #dfe9f2; box-shadow: 0 16px 50px rgba(0,0,0,.5); }
+  #hint b { font-size: 16px; }
+  #hint p { margin: 10px 0 0; font-size: 13.5px; line-height: 1.6; color: #b9cbda; }
+  #hint button { margin-top: 16px; width: 100%; padding: 10px; border-radius: 10px;
+    border: none; background: #2ea8e6; color: #fff; font-size: 14px; cursor: pointer; }
+
+  /* ---- 手机适配 ---- */
+  @media (max-width: 640px) {
+    #topbar { left: 10px; right: 10px; top: calc(8px + env(safe-area-inset-top)); }
+    #topbar h1 { font-size: 13px; }
+    #topbar h1 small { display: none; }
+    #btnRec, #btnFs { display: none; }   /* 手机：录制/全屏收起，保标题一行 */
+    .btn { padding: 6px 9px; font-size: 12px; }
+    #detCard { left: 50%; transform: translateX(-50%); top: calc(50px + env(safe-area-inset-top));
+      text-align: center; padding: 8px 20px; }
+    #detCard .dc-rate b { font-size: 44px; }
+    #panel { left: 0; right: 0; bottom: 0; transform: none; width: 100%; max-width: none;
+      border-radius: 14px 14px 0 0; max-height: 66vh; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+    #panel.hidden { transform: translateY(110%); opacity: 0; }
+    .row { padding: 6px 0; }
+    .label { min-width: 48px; }
+  }
   select { background: rgba(30,36,44,.9); color: #e6ecf2; border: 1px solid rgba(255,255,255,.18);
     border-radius: 7px; padding: 4px 8px; font-size: 12px; cursor: pointer; }
   .hint { font-size: 11px; color: #7d8fa1; }
@@ -116,7 +165,21 @@
   <div class="dc-rate"><b id="dcRate">--</b><small>滴/分</small></div>
   <div class="dc-sub" id="dcSub">将检测框对准滴管</div>
 </div>
+<div id="detBar">
+  <button class="chip" id="barSrc">🖥 测试源</button>
+  <label class="hint" style="white-space:nowrap">灵敏 <input type="range" id="barSens" min="1" max="10" value="5" style="width:70px;vertical-align:middle"></label>
+  <button class="chip" id="barReset">归零</button>
+  <button class="chip" id="barMore">⚙ 更多</button>
+</div>
+<div id="hint"><div class="card">
+  <b>🎯 滴速检测 · 三步上手</b>
+  <p>① 点底部「🖥 测试源」切换为「📷 摄像头」，允许权限后对准滴管</p>
+  <p>② 拖动蓝色横带（右下角圆点缩放）：放在<b>滴嘴与液面之间</b>的落液柱上，横带越窄越准，避开液面</p>
+  <p>③ 液滴穿过横带时闪绿环，左上角实时显示滴/分</p>
+  <button id="hintOk">知道了，开始</button>
+</div></div>
 <div id="panel">
+  <div id="panelHead"><b>⚙ 设置面板</b><button id="panelToggle">▾ 展开</button></div>
   <div class="row">
     <div class="label">模 式</div>
     <div class="chips">
@@ -162,24 +225,24 @@
     <span class="hint">把蓝色虚线框拉成一条「窄横带」，放在滴嘴与液面之间——液滴每次穿过带子产生一个脉冲，即为可靠的一滴（框越窄越准，避开液面防溅射干扰）。
       测试源模式下动画滴速精确已知，可用于验证检测精度；摄像头模式在手机 App / HTTPS 环境下可用。</span>
   </div>
-  <div class="row" id="bgRow">
+  <div class="row anim-only" id="bgRow">
     <div class="label">背 景</div>
     <div class="thumbs" id="thumbs"></div>
     <label class="upload-btn">＋ 上传背景图<input type="file" id="fileInput" accept="image/*" hidden></label>
     <span class="hint" id="bgHint"></span>
   </div>
-  <div class="row">
+  <div class="row anim-only">
     <div class="label">背景模糊</div>
     <input type="range" id="blurRange" min="0" max="24" step="1" value="0">
     <div class="readout"><b id="blurVal">0</b><small>px</small></div>
   </div>
-  <div class="row">
+  <div class="row anim-only">
     <div class="label">滴注速率</div>
     <input type="range" id="rateRange" min="0" max="120" step="1" value="45">
     <div class="readout"><b id="rateVal">45</b><small>滴/分</small>
       <span class="sub2" id="mlh">≈ 135 mL/h</span></div>
   </div>
-  <div class="row">
+  <div class="row anim-only">
     <div class="label">快 速</div>
     <div class="chips">
       <button class="chip" data-rate="0">停止</button>
@@ -191,7 +254,7 @@
     <div class="grow"></div>
     <span class="hint" id="intervalTxt">1.3 秒/滴</span>
   </div>
-  <div class="row">
+  <div class="row anim-only">
     <div class="label">参 数</div>
     <label class="hint">滴系数
       <select id="factorSel">
@@ -483,6 +546,12 @@ function drawVideoFrame() {
 function setMode(m) {
   state.mode = m;
   if (m === 'anim' || m === 'video') state.baseMode = m;
+  document.body.classList.toggle('detect', m === 'detect');
+  if (m === 'detect') {
+    if (!det.roiTouched) resetDefaultRoi();          // 未手动调过框时自动对位
+    try { if (!localStorage.getItem('ivsetHint')) $('hint').classList.add('on'); }
+    catch (e) { $('hint').classList.add('on'); }
+  }
   $('modeAnim').classList.toggle('active', m === 'anim');
   $('modeVideo').classList.toggle('active', m === 'video');
   $('modeDetect').classList.toggle('active', m === 'detect');
@@ -490,7 +559,7 @@ function setMode(m) {
   $('keyRow').style.display = m === 'video' ? 'flex' : 'none';
   $('detRow').style.display = m === 'detect' ? 'flex' : 'none';
   $('detRow2').style.display = m === 'detect' ? 'flex' : 'none';
-  $('detCard').style.display = m === 'detect' ? '' : 'none';
+  $('detCard').style.display = m === 'detect' ? 'block' : 'none';
   $('modeHint').textContent = {
     anim: '程序绘制的写实动画（可替换背景）',
     video: '实拍素材 · Mixkit 免费授权 · 速率通过播放速度调节',
@@ -501,6 +570,7 @@ function setMode(m) {
   if (m === 'detect' && state.baseMode === 'video') applyVideoRate();
   if (m !== 'detect' && camStream) stopCamera();
   refreshBgAvail();
+  syncDetBar();
 }
 
 /* ================= 布局（输液器几何） ================= */
@@ -976,7 +1046,7 @@ const det = {
   roi: { x: 0.46, y: 0.355, w: 0.08, h: 0.025 },  // 窄横带：液滴必经之路，一穿一脉冲（避开溅射与气泡）
   bg: null, bgMean: 0, bgInit: false, needReset: false,
   events: [], hist: [], lastEvent: -1e9, count: 0, armed: true, _dwell: 0,
-  flash: -1e9, status: '将检测框对准滴管', rate: 0, medIv: 0, drag: null, _buf: null,
+  flash: -1e9, status: '将检测框对准滴管', rate: 0, medIv: 0, drag: null, _buf: null, roiTouched: false,
   _vq: undefined, _quiet: undefined, _pth: 14, _thr: 0,
 };
 const detCv = document.createElement('canvas');
@@ -1006,6 +1076,15 @@ function stopCamera() {
   if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; cam.srcObject = null; }
 }
 
+function resetDefaultRoi() {   // 按当前画面几何把横带放回「滴嘴与液面之间」
+  if (state.detSource === 'camera') det.roi = { x: 0.46, y: 0.40, w: 0.08, h: 0.05 };
+  else {
+    const y1 = clamp((L.stubBot + L.chH * 0.05) / H, 0.02, 0.9);
+    const y2 = clamp((L.surfaceY - L.chH * 0.04) / H, 0.03, 0.95);
+    det.roi = { x: L.cx / W - 0.04, y: y1, w: 0.08, h: Math.max(0.02, y2 - y1) };
+  }
+  det.needReset = true;
+}
 function detSourceRect() {   // 归一化 ROI → 屏幕坐标映射
   if (state.detSource === 'camera' && cam.videoWidth) {
     const sw = cam.videoWidth, sh = cam.videoHeight;
@@ -1137,8 +1216,10 @@ function detOverlay() {
     ctx.beginPath(); ctx.arc(rx + rw / 2, ry + rh / 2, 14 + tf * 130, 0, 7); ctx.stroke();
   }
   ctx.restore();
-  // 运动能量波形（12 秒窗口）
-  const bw = Math.min(340, W * 0.5), bh = 74, bx = W - bw - 16, by = 64;
+  // 运动能量波形（12 秒窗口；手机端放底部避开读数卡）
+  const mobile = matchMedia('(max-width: 640px)').matches;
+  const bw = mobile ? Math.min(W * 0.62, 260) : Math.min(340, W * 0.5), bh = 74;
+  const bx = W - bw - 12, by = mobile ? H - bh - 84 : 64;
   ctx.save();
   rr(ctx, bx, by, bw, bh, 10);
   ctx.fillStyle = 'rgba(10,14,18,0.55)'; ctx.fill();
@@ -1385,7 +1466,12 @@ window.addEventListener('keydown', e => {
 });
 
 // 面板 / 全屏
-$('btnPanel').addEventListener('click', () => $('panel').classList.toggle('hidden'));
+$('btnPanel').addEventListener('click', () => {
+  if (document.body.classList.contains('detect')) {
+    $('panel').classList.remove('hidden');
+    $('panel').classList.toggle('show');
+  } else $('panel').classList.toggle('hidden');
+});
 $('btnFs').addEventListener('click', () => {
   if (document.fullscreenElement) document.exitFullscreen();
   else document.documentElement.requestFullscreen().catch(() => {});
@@ -1496,17 +1582,24 @@ cv.addEventListener('click', e => {
 });
 
 // ---- 滴速检测控件 ----
+function syncDetBar() {
+  $('barSrc').textContent = state.detSource === 'camera' ? '📷 摄像头' : '🖥 测试源';
+}
 $('modeDetect').addEventListener('click', () => setMode('detect'));
 $('detTest').addEventListener('click', () => {
   state.detSource = 'test';
   $('detTest').classList.add('active'); $('detCam').classList.remove('active');
   stopCamera();
+  det.roiTouched = false; resetDefaultRoi();
+  syncDetBar();
 });
 $('detCam').addEventListener('click', async () => {
   const ok = await startCamera();
   if (ok) {
     state.detSource = 'camera';
     $('detCam').classList.add('active'); $('detTest').classList.remove('active');
+    det.roiTouched = false; resetDefaultRoi();
+    syncDetBar();
   }
 });
 $('detSens').addEventListener('input', e => { state.sens = +e.target.value; });
@@ -1528,6 +1621,7 @@ cv.addEventListener('pointerdown', e => {
   if (det.drag) {
     cv.setPointerCapture(e.pointerId);
     det.needReset = true;
+    det.roiTouched = true;
   }
 });
 cv.addEventListener('pointermove', e => {
@@ -1553,6 +1647,31 @@ cv.addEventListener('pointermove', e => {
   }
 });
 ['pointerup', 'pointercancel'].forEach(ev => cv.addEventListener(ev, () => { det.drag = null; }));
+
+// ---- 检测工具条 / 折叠面板 / 指引 ----
+$('barSrc').addEventListener('click', () => {
+  (state.detSource === 'camera' ? $('detTest') : $('detCam')).click();
+});
+$('barSens').addEventListener('input', e => {
+  state.sens = +e.target.value;
+  $('detSens').value = e.target.value;
+});
+$('detSens').addEventListener('input', e => { $('barSens').value = e.target.value; });
+$('barReset').addEventListener('click', () => $('detReset').click());
+$('barMore').addEventListener('click', () => {
+  $('panel').classList.remove('hidden');
+  $('panel').classList.toggle('show');
+});
+$('hintOk').addEventListener('click', () => {
+  try { localStorage.setItem('ivsetHint', '1'); } catch (e) {}
+  $('hint').classList.remove('on');
+});
+if (matchMedia('(max-width: 640px)').matches) $('panel').classList.add('collapsed', 'hidden');
+$('panelToggle').textContent = $('panel').classList.contains('collapsed') ? '▾ 展开' : '▴ 收起';
+$('panelToggle').addEventListener('click', () => {
+  const c = $('panel').classList.toggle('collapsed');
+  $('panelToggle').textContent = c ? '▾ 展开' : '▴ 收起';
+});
 
 /* ================= 启动 ================= */
 buildPresets();
